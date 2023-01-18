@@ -1,27 +1,24 @@
-#include <QTextStream>
-#include <QTcpSocket>
-#include <QString>
 #include "newconnection.h"
-#include "timestamp.h"
 #include "mydisconnected.h"
+#include "timestamp.h"
+#include <QString>
+#include <QTcpSocket>
+#include <QTextStream>
 
-
-
-MyNewConnection::MyNewConnection(QObject *parent) : QObject(parent)
-{
-}
+MyNewConnection::MyNewConnection(QObject *parent) : QObject(parent) {}
 
 void MyNewConnection::myNewConn(QTcpServer *conn)
-    {
+{
     // Получаем сокет вновь подключенного клиента
-          QTcpSocket *socket = conn->nextPendingConnection();
-          QString ipString = socket->peerAddress().toString();
-
+    QTcpSocket *socket = conn->nextPendingConnection();
+    QString ipString = socket->peerAddress().toString();
 
     // Выводим в лог информацию о новом подключении
-          QTextStream(stdout) << getTimeStamp() << " New connection: " << ipString << "\n";
+    QTextStream(stdout) << getTimeStamp() << " > New connection: " << ipString << "\n";
 
-          MyDisconnected *myDisconnObj = new MyDisconnected;
+    MyDisconnected *myDisconnObj = new MyDisconnected;
 
-          QObject::connect(socket, &QTcpSocket::disconnected, [=]{ myDisconnObj->myDist(ipString); });
-    };
+    // Если соединение разорвано, сокет отправляет сигнал, по этому сигналу запускаем слот, который сообщит в лог о разорванном соединении
+
+    QObject::connect(socket, &QTcpSocket::disconnected, [=] { myDisconnObj->myDist(ipString); });
+};

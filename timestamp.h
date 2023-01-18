@@ -1,8 +1,8 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
 
-#include <QString>
 #include <QDate>
+#include <QString>
 #include <QTime>
 
 QString getTimeStamp();

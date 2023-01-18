@@ -1,9 +1,8 @@
-#include <QCoreApplication>
-#include <QTextStream>
-#include <QTcpServer>
-#include <QTcpSocket>
 #include "newconnection.h"
 #include "timestamp.h"
+#include <QCoreApplication>
+#include <QTcpServer>
+#include <QTextStream>
 
 using namespace std;
 
@@ -23,12 +22,13 @@ int main(int argc, char *argv[])
     QString addrString = conn->serverAddress().toString();
 
     // Пишем в лог адрес и порт на котором работает сервер
-    QTextStream(stdout) << getTimeStamp() << " Start to listen: " << addrString << ":" << port << "\n";
+    QTextStream(stdout) << getTimeStamp() << " Start to listen: " << addrString << ":" << port
+                        << "\n";
 
     MyNewConnection *myNewConnObj = new MyNewConnection();
 
     // По сигналу от QTcpServer запускаем слот
-    QObject::connect(conn, &QTcpServer::newConnection, [=]{ myNewConnObj->myNewConn(conn); });
+    QObject::connect(conn, &QTcpServer::newConnection, [=] { myNewConnObj->myNewConn(conn); });
 
     return a.exec();
 }

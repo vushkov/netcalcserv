@@ -1,13 +1,11 @@
 #include "mydisconnected.h"
-#include <QTextStream>
 #include "timestamp.h"
+#include <QTextStream>
 
-MyDisconnected::MyDisconnected(QObject *parent) : QObject(parent)
-{
-
-}
+MyDisconnected::MyDisconnected(QObject *parent) : QObject(parent) {}
 
 void MyDisconnected::myDist(QString ip)
 {
-QTextStream(stdout) << getTimeStamp() << " Disconnected: " << ip << "\n";
+    // Пишем в лог о разорванном соединении
+    QTextStream(stdout) << getTimeStamp() << " Disconnected: " << ip << "\n";
 }
