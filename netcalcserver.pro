@@ -10,6 +10,7 @@ CONFIG -= app_bundle
 
 SOURCES += \
         main.cpp \
+        mydisconnected.cpp \
         newconnection.cpp \
         timestamp.cpp
 
@@ -19,5 +20,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
+    mydisconnected.h \
     newconnection.h \
     timestamp.h
