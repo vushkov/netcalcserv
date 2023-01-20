@@ -11,4 +11,5 @@ signals:
 
 public slots:
     void myNewConn(QTcpServer *conn);
+    void readyRead();
 };

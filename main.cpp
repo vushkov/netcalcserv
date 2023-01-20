@@ -10,20 +10,18 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    // Определяем параметры сетевого подключения
-    QHostAddress *address = new QHostAddress();
+    // Определяем порт
     short port = 12345;
 
     // Начинаем слушать порт
     QTcpServer *conn = new QTcpServer();
-    conn->listen(*address, port);
+    conn->listen(QHostAddress::AnyIPv4, port);
 
     // Формируем строку с ip адресом на котором работает сервер
     QString addrString = conn->serverAddress().toString();
 
     // Пишем в лог адрес и порт на котором работает сервер
-    QTextStream(stdout) << getTimeStamp() << " Start to listen: " << addrString << ":" << port
-                        << "\n";
+    QTextStream(stdout) << getTimeStamp() << " > Start to listen: " << addrString << ":" << port << "\n";
 
     MyNewConnection *myNewConnObj = new MyNewConnection();
 
