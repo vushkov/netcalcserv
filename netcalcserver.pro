@@ -11,8 +11,7 @@ CONFIG -= app_bundle
 
 SOURCES += \
         main.cpp \
-        mydisconnected.cpp \
-        newconnection.cpp \
+        myserver.cpp \
         timestamp.cpp
 
 # Default rules for deployment.
@@ -21,6 +20,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    mydisconnected.h \
-    newconnection.h \
+    myserver.h \
     timestamp.h
