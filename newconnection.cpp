@@ -7,6 +7,7 @@
 #include <QTextStream>
 
 QTcpSocket *socket;
+QString ipString;
 
 MyNewConnection::MyNewConnection(QObject *parent) : QObject(parent) {}
 
@@ -14,7 +15,7 @@ void MyNewConnection::myNewConn(QTcpServer *conn)
 {
     // Получаем сокет вновь подключенного клиента
     socket = conn->nextPendingConnection();
-    QString ipString = socket->peerAddress().toString();
+    ipString = socket->peerAddress().toString();
 
     // Выводим в лог информацию о новом подключении
     QTextStream(stdout) << getTimeStamp() << " > New connection: " << ipString << "\n";
@@ -24,11 +25,6 @@ void MyNewConnection::myNewConn(QTcpServer *conn)
     // Если соединение разорвано, сокет отправляет сигнал, по этому сигналу запускаем слот, который сообщит в лог о разорванном соединении
 
     QObject::connect(socket, &QTcpSocket::disconnected, [=] { myDisconnObj->myDist(ipString); });
-
-    socket->waitForBytesWritten();
-    socket->waitForReadyRead();
-
-    socket->bytesAvailable();
 
     QObject::connect(socket, &QTcpSocket::readyRead, [=] { this->readyRead(); });
 };
@@ -43,17 +39,19 @@ void MyNewConnection::readyRead()
     double calcResult = expression.evaluate(recievedData).toNumber();
 
     // Выводим в лог исходное полученное выражение
-    QTextStream(stdout) << "\n"
-                        << getTimeStamp() << " > "
-                        << "Recieved data: " << recievedData << "\n";
+    QTextStream(stdout) << "[" << getTimeStamp() << "]"
+                        << "[" << ipString
+                        << "]"
+                           " > "
+                        << "Recieved: " << recievedData << "\n";
 
     // Выводим в лог результат вычисления
-    QTextStream(stdout) << getTimeStamp() << " > Result: " << calcResult << "\n";
+    QTextStream(stdout) << "[" << getTimeStamp() << "]"
+                        << "[" << ipString << "]"
+                        << " > Result: " << calcResult << "\n";
 
-    QString calcResultString = QString::number(calcResult,'f',1);
+    QString calcResultString = QString::number(calcResult);
 
     const char *calcResultchar = calcResultString.toStdString().c_str();
     socket->write(calcResultchar);
-
-
 };
