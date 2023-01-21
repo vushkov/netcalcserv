@@ -14,37 +14,43 @@ void myserver::startServer()
     short port = 12345;
 
     // Начинаем слушать порт
-    this->listen(QHostAddress::AnyIPv4, port);
+    if (this->listen(QHostAddress::AnyIPv4, port)) {
+        // Формируем строку с ip адресом на котором работает сервер
+        QString srvAddrStr = this->serverAddress().toString();
 
-    // Формируем строку с ip адресом на котором работает сервер
-    QString addrString = this->serverAddress().toString();
+        // Пишем в лог адрес и порт на котором работает сервер
+        QTextStream(stdout) << "[" << getTimeStamp() << "]"
+                            << " > Start listening: " << srvAddrStr << ":" << port << "\n";
 
-    // Пишем в лог адрес и порт на котором работает сервер
-    QTextStream(stdout) << getTimeStamp() << " > Start to listen: " << addrString << ":" << port
-                        << "\n";
-
-    // По сигналу от QTcpServer запускаем слот
-    QObject::connect(this, &QTcpServer::newConnection, [=] { this->newConnection(); });
+        // По сигналу о новом подключении запускаем слот
+        connect(this, SIGNAL(newConnection()), this, SLOT(newConnectionSlot()));
+    } else {
+        // Пишем в лог о неудаче
+        QTextStream(stdout) << "[" << getTimeStamp() << "]"
+                            << " > Error listening " << port << " port \n";
+    }
 };
 
-void myserver::newConnection()
+void myserver::newConnectionSlot()
 {
     // Получаем сокет вновь подключенного клиента
     QTcpSocket *socket = this->nextPendingConnection();
 
+    // Формируем строку с ip адресом клиента
     QString ipString = socket->peerAddress().toString();
 
     // Выводим в лог информацию о новом подключении
-    QTextStream(stdout) << getTimeStamp() << " > New connection: " << ipString << "\n";
+    QTextStream(stdout) << "[" << getTimeStamp() << "]"
+                        << " > New connection: " << ipString << "\n";
 
     // Если поступили новые данные в сокет, то отправляется сигнал, по которому слот начинает эти данные вычитывать
-    QObject::connect(socket, &QTcpSocket::readyRead, [=] { this->readyRead(socket, ipString); });
+    connect(socket, &QTcpSocket::readyRead, [=] { this->readyReadSlot(socket, ipString); });
 
     // Если соединение разорвано, сокет отправляет сигнал, по этому сигналу запускаем слот, который сообщит в лог о разорванном соединении
-    QObject::connect(socket, &QTcpSocket::disconnected, [=] { this->newDisconnection(ipString); });
+    connect(socket, &QTcpSocket::disconnected, [=] { this->disconnectionSlot(ipString); });
 };
 
-void myserver::readyRead(QTcpSocket *socket, QString ipString)
+void myserver::readyReadSlot(QTcpSocket *socket, QString ipString)
 {
     // Читаем полученные данные
     QString recievedData = socket->readAll();
@@ -63,16 +69,19 @@ void myserver::readyRead(QTcpSocket *socket, QString ipString)
     // Выводим в лог результат вычисления
     QTextStream(stdout) << "[" << getTimeStamp() << "]"
                         << "[" << ipString << "]"
-                        << " > Result: " << calcResult << "\n";
+                        << " > Returned result: " << calcResult << "\n";
 
+    // Переводим double в const char
     QString calcResultString = QString::number(calcResult);
-
     const char *calcResultchar = calcResultString.toStdString().c_str();
+
+    // Записываем данные в сокет
     socket->write(calcResultchar);
 }
 
-void myserver::newDisconnection(QString ipString)
+void myserver::disconnectionSlot(QString ipString)
 {
     // Пишем в лог о разорванном соединении
-    QTextStream(stdout) << getTimeStamp() << " > Disconnected: " << ipString << "\n";
+    QTextStream(stdout) << "[" << getTimeStamp() << "]"
+                        << " > Disconnected: " << ipString << "\n";
 }

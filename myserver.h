@@ -9,7 +9,9 @@ public:
 
 public slots:
     void startServer();
-    void newConnection();
-    void readyRead(QTcpSocket *socket, QString ipString);
-    void newDisconnection(QString ipString);
+
+private slots:
+    void newConnectionSlot();
+    void readyReadSlot(QTcpSocket *socket, QString ipString);
+    void disconnectionSlot(QString ipString);
 };
