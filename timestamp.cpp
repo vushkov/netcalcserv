@@ -8,7 +8,7 @@ QString getTimeStamp()
     QDate cd = QDate::currentDate();
     QTime ct = QTime::currentTime();
 
-    QString timeStamp = cd.toString("dd.MM.yyyy") + "-" + ct.toString("hh:mm:ss.zzz");
+    QString timeStamp = "[" + cd.toString("dd.MM.yyyy") + "-" + ct.toString("hh:mm:ss.zzz") + "]";
 
     return timeStamp;
 }

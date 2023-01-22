@@ -19,15 +19,14 @@ void myserver::startServer()
         QString srvAddrStr = this->serverAddress().toString();
 
         // Пишем в лог адрес и порт на котором работает сервер
-        QTextStream(stdout) << "[" << getTimeStamp() << "]"
-                            << " > Start listening: " << srvAddrStr << ":" << port << "\n";
+        QTextStream(stdout) << getTimeStamp() << " > Start listening: " << srvAddrStr << ":" << port
+                            << "\n";
 
         // По сигналу о новом подключении запускаем слот
         connect(this, SIGNAL(newConnection()), this, SLOT(newConnectionSlot()));
     } else {
         // Пишем в лог о неудаче
-        QTextStream(stdout) << "[" << getTimeStamp() << "]"
-                            << " > Error listening " << port << " port \n";
+        QTextStream(stdout) << getTimeStamp() << " > Error listening " << port << " port \n";
     }
 };
 
@@ -40,8 +39,7 @@ void myserver::newConnectionSlot()
     QString ipString = socket->peerAddress().toString();
 
     // Выводим в лог информацию о новом подключении
-    QTextStream(stdout) << "[" << getTimeStamp() << "]"
-                        << " > New connection: " << ipString << "\n";
+    QTextStream(stdout) << getTimeStamp() << " > New connection: " << ipString << "\n";
 
     // Если поступили новые данные в сокет, то отправляется сигнал, по которому слот начинает эти данные вычитывать
     connect(socket, &QTcpSocket::readyRead, [=] { this->readyReadSlot(socket, ipString); });
@@ -60,16 +58,12 @@ void myserver::readyReadSlot(QTcpSocket *socket, QString ipString)
     double calcResult = expression.evaluate(recievedData).toNumber();
 
     // Выводим в лог исходное полученное выражение
-    QTextStream(stdout) << "[" << getTimeStamp() << "]"
-                        << "[" << ipString
-                        << "]"
-                           " > "
-                        << "Recieved: " << recievedData << "\n";
+    QTextStream(stdout) << getTimeStamp() << "[" << ipString << "]"
+                        << " > Recieved: " << recievedData << "\n";
 
     // Выводим в лог результат вычисления
-    QTextStream(stdout) << "[" << getTimeStamp() << "]"
-                        << "[" << ipString << "]"
-                        << " > Returned result: " << calcResult << "\n";
+    QTextStream(stdout) << getTimeStamp() << "[" << ipString << "]"
+                        << " > Sent result: " << calcResult << "\n";
 
     // Переводим double в const char
     QString calcResultString = QString::number(calcResult);
@@ -82,6 +76,5 @@ void myserver::readyReadSlot(QTcpSocket *socket, QString ipString)
 void myserver::disconnectionSlot(QString ipString)
 {
     // Пишем в лог о разорванном соединении
-    QTextStream(stdout) << "[" << getTimeStamp() << "]"
-                        << " > Disconnected: " << ipString << "\n";
+    QTextStream(stdout) << getTimeStamp() << " > Disconnected: " << ipString << "\n";
 }
