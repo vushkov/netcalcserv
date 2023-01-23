@@ -1,4 +1,9 @@
 #include <QTcpServer>
+#include "timestamp.h"
+#include <QJSEngine>
+#include <QString>
+#include <QTcpSocket>
+#include <QTextStream>
 
 class myserver : public QTcpServer
 {
@@ -8,7 +13,7 @@ public:
     ~myserver();
 
 public slots:
-    void startServer();
+    void startServer(short port);
 
 private slots:
     void newConnectionSlot();

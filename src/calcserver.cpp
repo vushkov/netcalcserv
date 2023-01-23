@@ -1,26 +1,17 @@
-#include "myserver.h"
-#include "timestamp.h"
-#include <QJSEngine>
-#include <QString>
-#include <QTcpSocket>
-#include <QTextStream>
+#include "calcserver.h"
 
 myserver::myserver(){};
 myserver::~myserver(){};
 
-void myserver::startServer()
+void myserver::startServer(short port)
 {
-    // Определяем порт
-    short port = 12345;
-
     // Начинаем слушать порт
     if (this->listen(QHostAddress::AnyIPv4, port)) {
         // Формируем строку с ip адресом на котором работает сервер
         QString srvAddrStr = this->serverAddress().toString();
 
         // Пишем в лог адрес и порт на котором работает сервер
-        QTextStream(stdout) << getTimeStamp() << " > Start listening: " << srvAddrStr << ":" << port
-                            << "\n";
+        QTextStream(stdout) << getTimeStamp() << " > Start listening: " << srvAddrStr << ":" << port << "\n";
 
         // По сигналу о новом подключении запускаем слот
         connect(this, SIGNAL(newConnection()), this, SLOT(newConnectionSlot()));

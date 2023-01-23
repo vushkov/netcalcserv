@@ -1,4 +1,4 @@
-#include "myserver.h"
+#include "calcserver.h"
 #include <QCoreApplication>
 
 using namespace std;
@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     myserver server;
 
     // Применяем к объекту метод - старт сервера
-    server.startServer();
+    server.startServer(12345);
 
     return a.exec();
 }
