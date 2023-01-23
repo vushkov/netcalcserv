@@ -5,7 +5,7 @@
 #include <QTcpSocket>
 #include <QTextStream>
 
-class myserver : public QTcpServer
+class myserver: QObject
 {
     Q_OBJECT
 public:

@@ -3,18 +3,20 @@
 myserver::myserver(){};
 myserver::~myserver(){};
 
+QTcpServer *server = new QTcpServer;
+
 void myserver::startServer(short port)
 {
     // Начинаем слушать порт
-    if (this->listen(QHostAddress::AnyIPv4, port)) {
+    if (server->listen(QHostAddress::AnyIPv4, port)) {
         // Формируем строку с ip адресом на котором работает сервер
-        QString srvAddrStr = this->serverAddress().toString();
+        QString srvAddrStr = server->serverAddress().toString();
 
         // Пишем в лог адрес и порт на котором работает сервер
         QTextStream(stdout) << getTimeStamp() << " > Start listening: " << srvAddrStr << ":" << port << "\n";
 
         // По сигналу о новом подключении запускаем слот
-        connect(this, SIGNAL(newConnection()), this, SLOT(newConnectionSlot()));
+        connect(server, SIGNAL(newConnection()), this, SLOT(newConnectionSlot()));
     } else {
         // Пишем в лог о неудаче
         QTextStream(stdout) << getTimeStamp() << " > Error listening " << port << " port \n";
@@ -24,7 +26,7 @@ void myserver::startServer(short port)
 void myserver::newConnectionSlot()
 {
     // Получаем сокет вновь подключенного клиента
-    QTcpSocket *socket = this->nextPendingConnection();
+    QTcpSocket *socket = server->nextPendingConnection();
 
     // Формируем строку с ip адресом клиента
     QString ipString = socket->peerAddress().toString();
