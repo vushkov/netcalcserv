@@ -16,7 +16,7 @@ public slots:
     void startServer(short port);
 
 private slots:
-    void newConnectionSlot();
-    void readyReadSlot(QTcpSocket *socket, QString ipString);
-    void disconnectionSlot(QString ipString);
+    void newConnectionSlot(QTcpServer *server);
+    void readyReadSlot(QString ipString, QTcpSocket *socket);
+    void disconnectionSlot(QString ipString, QTcpSocket *socket);
 };
