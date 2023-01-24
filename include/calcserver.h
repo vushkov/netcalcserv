@@ -13,7 +13,7 @@ public:
     ~myserver();
 
 public slots:
-    void startServer(short port);
+    void startServer(unsigned short port);
 
 private slots:
     void newConnectionSlot(QTcpServer *server);
