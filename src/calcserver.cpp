@@ -1,4 +1,5 @@
 #include "calcserver.h"
+#include <QDataStream>
 
 myserver::myserver(){};
 myserver::~myserver(){};
@@ -57,6 +58,17 @@ void myserver::readyReadSlot(QString ipString, QTcpSocket *socket)
     // Если проверка прошла успешно, то удаляем этот последний символ \n
     recievedData.chop(1);
 
+//    QDataStream in;
+//    QString recievedData;
+
+//    in.setDevice(socket);
+//    in.setVersion(QDataStream::Qt_5_12);
+
+//    in.startTransaction();
+//    in >> recievedData;
+
+//    in.commitTransaction();
+
     // Вычисляем результат выражения
     QJSEngine expression;
     double calcResult = expression.evaluate(recievedData).toNumber();
@@ -82,4 +94,5 @@ void myserver::disconnectionSlot(QString ipString, QTcpSocket *socket)
     // Пишем в лог о разорванном соединении
     qInfo().noquote().nospace() << getTimeStamp() << " > Disconnected: " << ipString;
     socket->deleteLater();
+    //socket->~QTcpSocket();
 }
