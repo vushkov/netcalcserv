@@ -50,43 +50,48 @@ void myserver::readyReadSlot(QString ipString, QTcpSocket *socket)
     // Вводим массив, в котором будет содержаться полученные от клиента данные
     QByteArray recievedData = socket->readAll();
 
-    // Проверяем все ли данные мы получили путем поиска символа \n, который добавляет клиент в конец основным данным
-    while (!recievedData.endsWith('\n')) {
-        recievedData += socket->readAll();
-        qDebug().noquote().nospace() << getTimeStamp() << " CurrentRecievedData: " << recievedData;
+    // Проверяем все ли данные мы получили путем поиска символа \n, который добавляет клиент в конец основных данных
+    if (socket->isValid()) {
+        while (!recievedData.endsWith('\n')) {
+            recievedData += socket->readAll();
+            qDebug().noquote().nospace() << getTimeStamp() << " CurrentRecievedData: " << recievedData;
+        }
+
+        //    QDataStream in;
+        //    QString recievedData;
+
+        //    in.setDevice(socket);
+        //    in.setVersion(QDataStream::Qt_5_12);
+
+        //    in.startTransaction();
+        //    in >> recievedData;
+
+        //    in.commitTransaction();
+
+        // Если проверка прошла успешно, то удаляем этот последний символ \n
+        recievedData.chop(1);
+
+        // Вычисляем результат выражения
+        QJSEngine expression;
+        double calcResult = expression.evaluate(recievedData).toNumber();
+
+        // Выводим в лог исходное полученное выражение
+        qInfo().noquote().nospace() << getTimeStamp() << "[" << ipString << "]"
+                                    << " > Recieved: " << recievedData;
+
+        // Выводим в лог результат вычисления
+        qInfo().noquote().nospace() << getTimeStamp() << "[" << ipString << "]"
+                                    << " > Sent result: " << calcResult;
+
+        // Переводим double в const char
+        QString calcResultString = QString::number(calcResult);
+        const char *calcResultchar = calcResultString.toStdString().c_str();
+
+        // Записываем данные в сокет
+        socket->write(calcResultchar);
+    } else {
+        qInfo().noquote().nospace() << getTimeStamp() << " Error recieving data";
     }
-    // Если проверка прошла успешно, то удаляем этот последний символ \n
-    recievedData.chop(1);
-
-//    QDataStream in;
-//    QString recievedData;
-
-//    in.setDevice(socket);
-//    in.setVersion(QDataStream::Qt_5_12);
-
-//    in.startTransaction();
-//    in >> recievedData;
-
-//    in.commitTransaction();
-
-    // Вычисляем результат выражения
-    QJSEngine expression;
-    double calcResult = expression.evaluate(recievedData).toNumber();
-
-    // Выводим в лог исходное полученное выражение
-    qInfo().noquote().nospace() << getTimeStamp() << "[" << ipString << "]"
-                                << " > Recieved: " << recievedData;
-
-    // Выводим в лог результат вычисления
-    qInfo().noquote().nospace() << getTimeStamp() << "[" << ipString << "]"
-                                << " > Sent result: " << calcResult;
-
-    // Переводим double в const char
-    QString calcResultString = QString::number(calcResult);
-    const char *calcResultchar = calcResultString.toStdString().c_str();
-
-    // Записываем данные в сокет
-    socket->write(calcResultchar);
 }
 
 void myserver::disconnectionSlot(QString ipString, QTcpSocket *socket)
