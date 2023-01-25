@@ -93,6 +93,5 @@ void myserver::disconnectionSlot(QString ipString, QTcpSocket *socket)
 {
     // Пишем в лог о разорванном соединении
     qInfo().noquote().nospace() << getTimeStamp() << " > Disconnected: " << ipString;
-    socket->deleteLater();
-    //socket->~QTcpSocket();
+    socket->~QTcpSocket();
 }
