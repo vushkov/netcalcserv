@@ -1,22 +1,27 @@
-#include <QTcpServer>
 #include "timestamp.h"
 #include <QJSEngine>
 #include <QString>
+#include <QTcpServer>
 #include <QTcpSocket>
 #include <QTextStream>
 
-class myserver: QObject
+class CalcServer : QObject
 {
     Q_OBJECT
 public:
-    myserver();
-    ~myserver();
+    explicit CalcServer(unsigned short port);
+    ~CalcServer();
+
+private:
+    QTcpServer *server;
+    quint16 nextBlockSize;
 
 public slots:
-    void startServer(unsigned short port);
+   // void startServer(unsigned short port);
 
 private slots:
-    void newConnectionSlot(QTcpServer *server);
-    void readyReadSlot(QString ipString, QTcpSocket *socket);
-    void disconnectionSlot(QString ipString, QTcpSocket *socket);
+    virtual void newConnectionSlot();
+    void readyReadSlot();
+    void disconnectionSlot();
+    void sendToClientSlot(QTcpSocket *socket, const QString& receivedData);
 };

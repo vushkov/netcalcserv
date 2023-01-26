@@ -8,10 +8,10 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
     // Создаем объект класса "myserver"
-    myserver server;
+    CalcServer newServer(12345);
 
     // Применяем к объекту метод - старт сервера
-    server.startServer(12345);
+    //newServer.startServer(12345);
 
     return a.exec();
 }
