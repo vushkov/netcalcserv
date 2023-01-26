@@ -16,9 +16,6 @@ private:
     QTcpServer *server;
     quint16 nextBlockSize;
 
-public slots:
-   // void startServer(unsigned short port);
-
 private slots:
     virtual void newConnectionSlot();
     void readyReadSlot();

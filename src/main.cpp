@@ -7,11 +7,8 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    // Создаем объект класса "myserver"
+    // Создаем объект класса myserver, в конструкторе передаем порт
     CalcServer newServer(12345);
-
-    // Применяем к объекту метод - старт сервера
-    //newServer.startServer(12345);
 
     return a.exec();
 }
