@@ -1,7 +1,8 @@
 #include "calcserver.h"
-#include <QDataStream>
 
-CalcServer::CalcServer(unsigned short port) : nextBlockSize(0)
+using namespace timestamp;
+
+CalcServer::CalcServer(unsigned short port)
 {
     // Определяем объект сервера с родителем
     server = new QTcpServer(this);
@@ -17,21 +18,24 @@ CalcServer::CalcServer(unsigned short port) : nextBlockSize(0)
         // Пишем в лог адрес и порт на котором работает сервер
         qInfo().noquote().nospace() << getTimeStamp() << " > Start listening: " << srvAddrStr << ":" << port;
 
-        // По сигналу о новом подключении запускаем слот
+        // Соединяем новые подключения со слотом
         connect(server, SIGNAL(newConnection()), this, SLOT(newConnectionSlot()));
     } else {
-        // Пишем в лог о неудаче
+        // Если неудача - пишем в лог
         qWarning().noquote().nospace() << getTimeStamp() << " > Error listening port " << port << ": " << server->errorString();
-        // Закрываем сервер
+        // Закрываем сервер - не предпринимаем попыток слушать порт
         server->close();
     }
 }
 CalcServer::~CalcServer(){};
 
-/*virtual*/ void CalcServer::newConnectionSlot()
+void CalcServer::newConnectionSlot()
 {
     // Получаем сокет вновь подключенного клиента
     QTcpSocket *socket = server->nextPendingConnection();
+
+    // Создаем для этого сокета внутренний буфер
+    QBuffer *buffer = new QBuffer(socket);
 
     // Формируем строку с ip адресом клиента
     QString ipString = socket->peerAddress().toString();
@@ -40,104 +44,66 @@ CalcServer::~CalcServer(){};
     qInfo().noquote().nospace() << getTimeStamp() << " > New connection: " << ipString;
 
     // Если поступили новые данные в сокет, то отправляется сигнал, по которому слот начинает эти данные вычитывать
-    connect(socket, SIGNAL(readyRead()), this, SLOT(readyReadSlot()));
+    connect(socket, &QTcpSocket::readyRead, [=] { this->readyReadSlot(socket, buffer); });
 
     // Если соединение разорвано, сокет отправляет сигнал, по этому сигналу запускаем слот, который сообщит в лог о разорванном соединении
     connect(socket, SIGNAL(disconnected()), this, SLOT(disconnectionSlot()));
 }
 
-void CalcServer::readyReadSlot()
+void CalcServer::readyReadSlot(QTcpSocket *socket, QBuffer *buffer)
 {
-    // Получаем сокет с использованием отправителя сигнала
-    QTcpSocket *socket = (QTcpSocket *) sender();
+    // Вводим массив байт, в котором будет содержаться последние полученные от клиента данные
+    QByteArray curRecievedData = socket->readAll();
+
+    // Открываем буфер, если он не открыт
+    if(!buffer->isOpen()){
+        buffer->open(QBuffer::ReadWrite);
+    }
+
+    // Записываем в буфер последние полученные данные
+    buffer->write(curRecievedData);
+
+    // Считываем весь буфер
+    QByteArray allReceivedData = buffer->buffer();
+
     QString ipString = socket->peerAddress().toString();
 
-    // Определяем поток данных
-    QDataStream in(socket);
-    in.setVersion(QDataStream::Qt_5_12);
-    qDebug().noquote().nospace() << getTimeStamp() << "bytesAvailable = " << socket->bytesAvailable() << " nextBlockSize = " << nextBlockSize;
-    // Бесконечный цикл
-    for (;;) {
-        // Если размер блока равен 0
-        if (!nextBlockSize) {
-            // и если размер данных не менее 2 байт
-            if (socket->bytesAvailable() < sizeof(quint16)) {
-                break;
-            }
-            qDebug().noquote().nospace() << getTimeStamp() << "bytesAvailable = " << socket->bytesAvailable() << " nextBlockSize = " << nextBlockSize;
-            // То считываем размер блока
-            in >> nextBlockSize;
-            qDebug().noquote().nospace() << getTimeStamp() << "bytesAvailable = " << socket->bytesAvailable() << " nextBlockSize = " << nextBlockSize;
-        }
-        // Если размер данных больше или равен блоку, то данные считываются в переменную
-        if (socket->bytesAvailable() < nextBlockSize) {
-            break;
-        }
+    // Пишем в дебаг текущее содержимое буфера
+    qDebug().noquote().nospace() << getTimeStamp() << "[" << ipString << "]" << " > Данные буфера: " << allReceivedData;
 
-        qDebug().noquote().nospace() << getTimeStamp() << "bytesAvailable = " << socket->bytesAvailable() << " nextBlockSize = " << nextBlockSize;
+    // Проверяем все ли данные мы получили путем поиска символа \n, который добавляет клиент в конец основных данных
+    if(allReceivedData.endsWith('\n')){
 
-        QTime time;
-        QString receivedData;
+        // Если найден символ конца данных, то:
+        // Чистим буфер
+        buffer->buffer().clear();
 
-        // Считывание данных
-        in >> time >> receivedData;
+        // Устанавливаем позицию в 0
+        buffer->seek(0);
+
+        // Удаляем последний символ \n из данных
+        allReceivedData.chop(1);
+
+        // Вычисляем результат выражения
+        QJSEngine expression;
+        double calcResult = expression.evaluate(allReceivedData).toNumber();
 
         // Выводим в лог исходное полученное выражение
         qInfo().noquote().nospace() << getTimeStamp() << "[" << ipString << "]"
-                                    << " > Recieved: " << receivedData;
+                                    << " > Recieved: " << allReceivedData;
 
-        // Обнуляем размер блока
-        nextBlockSize = 0;
+        // Выводим в лог результат вычисления
+        qInfo().noquote().nospace() << getTimeStamp() << "[" << ipString << "]"
+                                    << " > Sent result: " << calcResult;
 
-        // Вызываем метод для отправки данных клиенту
-        sendToClientSlot(socket, receivedData);
-        qDebug().noquote().nospace() << getTimeStamp() << "bytesAvailable = " << socket->bytesAvailable() << " nextBlockSize = " << nextBlockSize;
+        // Переводим double в const char
+        QString calcResultString = QString::number(calcResult);
+        const char *calcResultchar = calcResultString.toStdString().c_str();
+
+        // Записываем данные в сокет
+        socket->write(calcResultchar);
     }
 }
-
-void CalcServer::sendToClientSlot(QTcpSocket *socket, const QString &receivedData)
-{
-    // Создаем объект класса QByteArray
-    QByteArray arrBlock;
-
-    // Создаем объект класса QDataStream на основе arrBlock
-    QDataStream out(&arrBlock, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_12);
-
-    // Записываем все данные блока, размер устанавливаем равный 0
-    out << quint16(0) << QTime::currentTime() << receivedData;
-
-    // Перемещаем указатель на начало блока
-    out.device()->seek(0);
-
-    // Вычисляем размер блока
-    out << quint16(arrBlock.size() - sizeof(qint16));
-
-    // Записываем данные в сокет
-    socket->write(arrBlock);
-
-    /*
-    // Вычисляем результат выражения
-    QJSEngine expression;
-    double calcResult = expression.evaluate(receivedData).toNumber();
-
-    QString ipString = socket->peerAddress().toString();
-
-    // Выводим в лог исходное полученное выражение
-    qInfo().noquote().nospace() << getTimeStamp() << "[" << ipString << "]"
-                                << " > Recieved: " << receivedData;
-
-    // Выводим в лог результат вычисления
-    qInfo().noquote().nospace() << getTimeStamp() << "[" << ipString << "]"
-                                << " > Sent result: " << calcResult;
-
-    // Переводим double в const char
-    QString calcResultString = QString::number(calcResult);
-    const char *calcResultchar = calcResultString.toStdString().c_str();
-*/
-
-
-};
 
 void CalcServer::disconnectionSlot()
 {
@@ -149,6 +115,6 @@ void CalcServer::disconnectionSlot()
     // Пишем в лог о разорванном соединении
     qInfo().noquote().nospace() << getTimeStamp() << " > Disconnected: " << ipString;
 
-    // Удаляем сокет
+    // Удаляем сокет, вместе с ним удалится и внутренний буфер buffer
     socket->deleteLater();
 }

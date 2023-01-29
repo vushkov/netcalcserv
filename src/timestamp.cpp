@@ -2,6 +2,8 @@
 #include <QString>
 #include <QTime>
 
+namespace timestamp{
+
 // Функция, которая формирует строку текущих даты и времени
 QString getTimeStamp()
 {
@@ -12,3 +14,4 @@ QString getTimeStamp()
 
     return timeStamp;
 }
+} // namespace timestamp

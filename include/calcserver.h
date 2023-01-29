@@ -1,9 +1,8 @@
 #include "timestamp.h"
 #include <QJSEngine>
-#include <QString>
 #include <QTcpServer>
 #include <QTcpSocket>
-#include <QTextStream>
+#include <QBuffer>
 
 class CalcServer : QObject
 {
@@ -14,11 +13,9 @@ public:
 
 private:
     QTcpServer *server;
-    quint16 nextBlockSize;
 
 private slots:
-    virtual void newConnectionSlot();
-    void readyReadSlot();
+    void newConnectionSlot();
+    void readyReadSlot(QTcpSocket *socket, QBuffer *buffer);
     void disconnectionSlot();
-    void sendToClientSlot(QTcpSocket *socket, const QString& receivedData);
 };

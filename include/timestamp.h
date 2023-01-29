@@ -5,6 +5,10 @@
 #include <QString>
 #include <QTime>
 
+namespace timestamp{
+
 QString getTimeStamp();
+
+} //namespace timestamp
 
 #endif
