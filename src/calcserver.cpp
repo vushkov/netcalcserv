@@ -55,34 +55,27 @@ void CalcServer::readyReadSlot(QTcpSocket *socket, QBuffer *buffer)
     // Вводим массив байт, в котором будет содержаться последние полученные от клиента данные
     QByteArray curRecievedData = socket->readAll();
 
+    QString ipString = socket->peerAddress().toString();
+
     // Открываем буфер, если он не открыт
-    if(!buffer->isOpen()){
+    if (!buffer->isOpen()) {
         buffer->open(QBuffer::ReadWrite);
     }
 
-    // Записываем в буфер последние полученные данные
-    buffer->write(curRecievedData);
+    // По символу \n разделяем исходный данные
+    QList<QByteArray> curRecievedDataSplit = curRecievedData.split('\n');
 
-    // Считываем весь буфер
-    QByteArray allReceivedData = buffer->buffer();
+    // Обрабатываем этот список по циклу
+    // Размер списка должен быть больше 1, так как последний элемент будет без символа \n значит его сохраняем только в промежуточный буфер
+    while (curRecievedDataSplit.size() > 1) {
+        // Если \n стоит первым, значит данные в промежуточном буфере - уже полные, их можно отправлять сразу в сокет
+        if (curRecievedDataSplit[0] != "") {
+            // Иначе пишем в промежуточный буфер
+            buffer->write(curRecievedDataSplit[0]);
+        }
 
-    QString ipString = socket->peerAddress().toString();
-
-    // Пишем в дебаг текущее содержимое буфера
-    qDebug().noquote().nospace() << getTimeStamp() << "[" << ipString << "]" << " > Данные буфера: " << allReceivedData;
-
-    // Проверяем все ли данные мы получили путем поиска символа \n, который добавляет клиент в конец основных данных
-    if(allReceivedData.endsWith('\n')){
-
-        // Если найден символ конца данных, то:
-        // Чистим буфер
-        buffer->buffer().clear();
-
-        // Устанавливаем позицию в 0
-        buffer->seek(0);
-
-        // Удаляем последний символ \n из данных
-        allReceivedData.chop(1);
+        // Получаем полные данные из промежуточного буфера
+        QByteArray allReceivedData = buffer->buffer();
 
         // Вычисляем результат выражения
         QJSEngine expression;
@@ -102,6 +95,20 @@ void CalcServer::readyReadSlot(QTcpSocket *socket, QBuffer *buffer)
 
         // Записываем данные в сокет
         socket->write(calcResultchar);
+
+        // Чистим буфер
+        buffer->buffer().clear();
+
+        // Устанавливаем позицию в 0
+        buffer->seek(0);
+
+        // Удаляем первый элемент списка
+        curRecievedDataSplit.removeFirst();
+    }
+
+    // Пишем данные в промежуточный буфер, если они не пустые. Если пустые, то значит символ \n стоял самым последним и данные перед ним уже отправлены в сокет
+    if (curRecievedDataSplit[0] != "") {
+        buffer->write(curRecievedDataSplit[0]);
     }
 }
 
