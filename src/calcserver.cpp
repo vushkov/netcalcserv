@@ -91,6 +91,7 @@ void CalcServer::readyReadSlot(QTcpSocket *socket, QBuffer *buffer)
 
         // Переводим double в const char
         QString calcResultString = QString::number(calcResult);
+        calcResultString = calcResultString.append('\n');
         const char *calcResultchar = calcResultString.toStdString().c_str();
 
         // Записываем данные в сокет
